@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.weathernow.data.WeatherResult
 import com.app.weathernow.ui.theme.WeatherNowTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -51,7 +52,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun WeatherScreen(
     modifier: Modifier = Modifier,
-    viewModel: WeatherViewModel = viewModel()
+    viewModel: WeatherViewModel = hiltViewModel<WeatherViewModel>()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
