@@ -36,6 +36,8 @@ A modern, beautiful Android weather application built with Jetpack Compose and C
 
 ## Screenshots
 
+<img width="270" height="600" alt="image" src="https://github.com/user-attachments/assets/a9002608-f7c5-4e3b-8ee8-1b8569fef2e5" />
+<img width="270" height="600" alt="image" src="https://github.com/user-attachments/assets/a976f5c9-5313-4bb4-a5e1-3a902df1e5a4" />
 
 
 ## License
