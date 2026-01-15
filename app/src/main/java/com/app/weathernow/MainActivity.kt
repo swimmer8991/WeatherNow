@@ -1,14 +1,17 @@
 // File: app/src/main/java/com/app/weathernow/MainActivity.kt
 package com.app.weathernow
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,8 +23,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -58,6 +65,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -73,12 +81,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun WeatherScreen(
     modifier: Modifier = Modifier,
     viewModel: WeatherViewModel = hiltViewModel<WeatherViewModel>()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
         if (uiState.city.isBlank()) {
@@ -230,7 +240,7 @@ fun WeatherScreen(
                         exit = fadeOut()
                     ) {
                         Column(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().verticalScroll(scrollState),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             // Main Weather Card with stronger gradient
@@ -403,11 +413,160 @@ fun WeatherScreen(
                                     }
                                 }
                             }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            // Hourly Forecast Section
+                            if (uiState.forecast != null) {
+                                Text(
+                                    text = "Hourly Forecast",
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier
+                                        .align(Alignment.Start)
+                                        .padding(bottom = 16.dp)
+                                )
+
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                                    )
+                                ) {
+                                    androidx.compose.foundation.lazy.LazyRow(
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        items(items = uiState.forecast!!.list?.take(8) ?: emptyList()) { item ->
+                                            HourlyForecastItem(item = item)
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                // Daily Forecast Section
+                                Text(
+                                    text = "Daily Forecast",
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier
+                                        .align(Alignment.Start)
+                                        .padding(bottom = 16.dp)
+                                )
+
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surface
+                                    )
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(8.dp)
+                                    ) {
+                                        // Group by day and take one item per day (approx implementation)
+                                        // For better accuracy we should calculate min/max, but for now specific time point is okay
+                                        
+                                        val dailyItems = uiState.forecast!!.list
+                                            ?.filter { it.dtTxt?.contains("12:00:00") == true }
+                                            ?.distinctBy { it.dtTxt?.substring(0, 10) }
+                                            ?.take(5) ?: emptyList()
+
+                                        dailyItems.forEach { item ->
+                                            // Simple day parsing
+                                            val date = try {
+                                                java.time.LocalDate.parse(item.dtTxt?.substring(0, 10))
+                                            } catch (e: Exception) {
+                                                null
+                                            }
+                                            val dayName = date?.dayOfWeek?.name?.lowercase()
+                                                ?.replaceFirstChar { it.uppercase() } ?: item.dtTxt?.substring(0, 10) ?: ""
+
+                                            DailyForecastItem(item = item, dayName = dayName)
+                                            if (item != dailyItems.last()) {
+                                                androidx.compose.material3.Divider(
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
+                                                    thickness = 1.dp,
+                                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun HourlyForecastItem(
+    item: com.app.weathernow.data.ForecastItem
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 12.dp)
+    ) {
+        Text(
+            text = item.dtTxt?.substring(11, 16) ?: "", // Extract HH:mm
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        WeatherIcon(
+            iconCode = item.weather?.firstOrNull()?.icon,
+            size = 40
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "${item.main?.temp?.toInt() ?: 0}°",
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontWeight = FontWeight.Bold
+            ),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+fun DailyForecastItem(
+    item: com.app.weathernow.data.ForecastItem,
+    dayName: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = dayName,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        
+        WeatherIcon(
+            iconCode = item.weather?.firstOrNull()?.icon,
+            size = 40
+        )
+        
+        Text(
+            text = "${item.main?.temp?.toInt() ?: 0}°",
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(start = 16.dp)
+        )
     }
 }
 

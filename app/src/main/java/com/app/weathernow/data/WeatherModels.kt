@@ -25,3 +25,15 @@ data class WindInfo(
     @SerializedName("speed") val speed: Double?
 )
 
+data class ForecastResponse(
+    @SerializedName("list") val list: List<ForecastItem>?
+)
+
+data class ForecastItem(
+    @SerializedName("dt") val dt: Long?,
+    @SerializedName("main") val main: MainInfo?,
+    @SerializedName("weather") val weather: List<WeatherDescription>?,
+    @SerializedName("wind") val wind: WindInfo?,
+    @SerializedName("dt_txt") val dtTxt: String?
+)
+

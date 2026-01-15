@@ -48,8 +48,7 @@ fun WeatherIcon(
                     )
                 ),
                 shape = CircleShape
-            )
-            .shadow(elevation = 8.dp, shape = CircleShape),
+            ),
         contentAlignment = Alignment.Center
     ) {
         Text(

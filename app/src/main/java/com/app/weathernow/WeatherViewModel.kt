@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.weathernow.data.WeatherRepository
 import com.app.weathernow.data.WeatherResponse
+import com.app.weathernow.data.ForecastResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -14,6 +16,7 @@ data class WeatherUiState(
     val city: String = "",
     val isLoading: Boolean = false,
     val weather: WeatherResponse? = null,
+    val forecast: ForecastResponse? = null,
     val error: String? = null
 )
 
@@ -36,31 +39,36 @@ class WeatherViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
         viewModelScope.launch {
-            val result = repository.getCurrentWeather(city)
-            when (result) {
-                is com.app.weathernow.data.WeatherResult.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        weather = result.data,
-                        error = null
-                    )
-                }
+            // Load current weather and forecast in parallel
+            val weatherResultDeferred = async { repository.getCurrentWeather(city) }
+            val forecastResultDeferred = async { repository.getForecast(city) }
 
-                is com.app.weathernow.data.WeatherResult.Error -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = result.message,
-                        weather = null
-                    )
-                }
+            val weatherResult = weatherResultDeferred.await()
+            val forecastResult = forecastResultDeferred.await()
 
-                com.app.weathernow.data.WeatherResult.Loading -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = true,
-                        error = null
-                    )
-                }
+            val currentState = _uiState.value
+            
+            val newState = if (weatherResult is com.app.weathernow.data.WeatherResult.Success && 
+                               forecastResult is com.app.weathernow.data.WeatherResult.Success) {
+                currentState.copy(
+                    isLoading = false,
+                    weather = weatherResult.data,
+                    forecast = forecastResult.data,
+                    error = null
+                )
+            } else {
+                val errorMessage = (weatherResult as? com.app.weathernow.data.WeatherResult.Error)?.message 
+                    ?: (forecastResult as? com.app.weathernow.data.WeatherResult.Error)?.message 
+                    ?: "Unknown error"
+                
+                currentState.copy(
+                    isLoading = false,
+                    error = errorMessage,
+                    weather = null,
+                    forecast = null
+                )
             }
+            _uiState.value = newState
         }
     }
 }
