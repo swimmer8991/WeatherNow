@@ -92,7 +92,7 @@ fun WeatherScreen(
 
     LaunchedEffect(Unit) {
         if (uiState.city.isBlank()) {
-            viewModel.onCityChange("London")
+            viewModel.onCityChange("Chernihiv") // Default city for demo
             viewModel.loadWeather()
         }
     }
@@ -174,7 +174,6 @@ fun WeatherScreen(
                                         )
                                     )
                                 )
-                                .shadow(6.dp, RoundedCornerShape(12.dp))
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Search,
