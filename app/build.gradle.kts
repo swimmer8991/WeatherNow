@@ -22,7 +22,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "OPEN_WEATHER_API_KEY", "\"YOUR_API_KEY_HERE\"")
+        buildConfigField("String", "OPEN_WEATHER_API_KEY", "\"d6e77a88c52edfa3ea79f729ebe7982c\"")
     }
 
     buildTypes {
@@ -78,4 +78,10 @@ dependencies {
     kapt(libs.hilt.compiler)
     // Hilt + ViewModel для Compose
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    
+    // Material Icons
+    implementation("androidx.compose.material:material-icons-extended")
+    
+    // Compose Animation
+    implementation("androidx.compose.animation:animation")
 }
