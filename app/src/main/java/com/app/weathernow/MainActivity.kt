@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/app/weathernow/MainActivity.kt
 package com.app.weathernow
 
 import android.os.Bundle
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -32,7 +34,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +49,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Shadow
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.weathernow.ui.components.WeatherIcon
 import com.app.weathernow.ui.theme.WeatherNowTheme
@@ -89,7 +93,7 @@ fun WeatherScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                         MaterialTheme.colorScheme.background
                     )
                 )
@@ -101,21 +105,26 @@ fun WeatherScreen(
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header
+            // Header with subtle shadow
             Text(
                 text = "WeatherNow",
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    shadow = Shadow(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                        offset = Offset(2f, 2f),
+                        blurRadius = 8f
+                    )
                 ),
-                modifier = Modifier.padding(top = 16.dp, bottom = 32.dp)
+                modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
             )
 
             // Search Section
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
@@ -146,10 +155,16 @@ fun WeatherScreen(
                             enabled = !uiState.isLoading && uiState.city.isNotBlank(),
                             modifier = Modifier
                                 .size(56.dp)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    shape = RoundedCornerShape(12.dp)
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.secondary
+                                        )
+                                    )
                                 )
+                                .shadow(6.dp, RoundedCornerShape(12.dp))
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Search,
@@ -163,7 +178,7 @@ fun WeatherScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Content Section
+            // Content Section (loading / error / content) - minor visual tweaks inside
             when {
                 uiState.isLoading -> {
                     Box(
@@ -194,7 +209,8 @@ fun WeatherScreen(
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
                     ) {
                         Text(
                             text = uiState.error ?: "Unknown error",
@@ -217,11 +233,11 @@ fun WeatherScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Main Weather Card
+                            // Main Weather Card with stronger gradient
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(24.dp),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
                                 colors = CardDefaults.cardColors(
                                     containerColor = MaterialTheme.colorScheme.surface
                                 )
@@ -232,8 +248,8 @@ fun WeatherScreen(
                                         .background(
                                             brush = Brush.horizontalGradient(
                                                 colors = listOf(
-                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.05f)
+                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.06f)
                                                 )
                                             )
                                         )
@@ -250,35 +266,35 @@ fun WeatherScreen(
                                             ),
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
-                                        
+
                                         Spacer(modifier = Modifier.height(16.dp))
-                                        
-                                        // Weather Icon
+
+                                        // Weather Icon (bigger)
                                         WeatherIcon(
                                             iconCode = weather.weather?.firstOrNull()?.icon,
-                                            size = 100
+                                            size = 120
                                         )
-                                        
+
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        
+
                                         // Temperature
                                         Text(
                                             text = "${weather.main?.temp?.toInt() ?: 0}°",
                                             style = MaterialTheme.typography.displayLarge.copy(
-                                                fontWeight = FontWeight.Bold
+                                                fontWeight = FontWeight.ExtraBold
                                             ),
                                             color = MaterialTheme.colorScheme.primary
                                         )
-                                        
+
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        
+
                                         // Description
                                         Text(
-                                            text = weather.weather?.firstOrNull()?.description?.replaceFirstChar { 
-                                                it.uppercaseChar() 
+                                            text = weather.weather?.firstOrNull()?.description?.replaceFirstChar {
+                                                it.uppercaseChar()
                                             }.orEmpty(),
                                             style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
                                         )
                                     }
                                 }
@@ -286,7 +302,7 @@ fun WeatherScreen(
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Details Cards
+                            // Details Cards (no functional changes, slightly higher elevation)
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -297,7 +313,8 @@ fun WeatherScreen(
                                     shape = RoundedCornerShape(16.dp),
                                     colors = CardDefaults.cardColors(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                    )
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
                                 ) {
                                     Column(
                                         modifier = Modifier.padding(16.dp),
@@ -328,7 +345,8 @@ fun WeatherScreen(
                                     shape = RoundedCornerShape(16.dp),
                                     colors = CardDefaults.cardColors(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                    )
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
                                 ) {
                                     Column(
                                         modifier = Modifier.padding(16.dp),
@@ -359,7 +377,8 @@ fun WeatherScreen(
                                     shape = RoundedCornerShape(16.dp),
                                     colors = CardDefaults.cardColors(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                    )
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
                                 ) {
                                     Column(
                                         modifier = Modifier.padding(16.dp),

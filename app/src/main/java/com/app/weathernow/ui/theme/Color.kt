@@ -15,3 +15,9 @@ val DarkBlue = Color(0xFF1E3A5F)
 val DarkerBlue = Color(0xFF0F1B2E)
 val LightGray = Color(0xFFF5F5F5)
 val DarkGray = Color(0xFF2C2C2C)
+
+// Weather-themed colors / gradients
+val GradientTop = Color(0xFF8EC5FF)
+val GradientBottom = Color(0xFFE0C3FC)
+val CardGradientStart = Color(0xFFEEF8FF)
+val CardGradientEnd = Color(0xFFF6F0FF)

@@ -1,9 +1,17 @@
 package com.app.weathernow.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,10 +35,26 @@ fun WeatherIcon(
         iconCode.startsWith("50") -> "🌫️" // mist
         else -> "🌤️"
     }
-    
-    Text(
-        text = emoji,
-        fontSize = size.sp,
-        modifier = modifier.size(size.dp)
-    )
+
+    Box(
+        modifier = modifier
+            .size(size.dp)
+            .clip(CircleShape)
+            .background(
+                Brush.radialGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.95f),
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.9f)
+                    )
+                ),
+                shape = CircleShape
+            )
+            .shadow(elevation = 8.dp, shape = CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = emoji,
+            fontSize = (size * 0.5).sp
+        )
+    }
 }
