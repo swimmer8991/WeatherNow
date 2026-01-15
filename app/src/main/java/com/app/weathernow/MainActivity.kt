@@ -10,6 +10,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -58,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.weathernow.ui.components.WeatherIcon
 import com.app.weathernow.ui.theme.WeatherNowTheme
@@ -130,56 +133,93 @@ fun WeatherScreen(
                 modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
             )
 
-            // Search Section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+            // Search Section with Autocomplete
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onSurface
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .zIndex(1f) // Ensure dropdown is on top
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Column {
                         OutlinedTextField(
-                            value = uiState.city,
-                            onValueChange = { viewModel.onCityChange(it) },
-                            modifier = Modifier.weight(1f),
-                            label = { Text("Enter city name") },
+                            value = uiState.searchQuery,
+                            onValueChange = { viewModel.onSearchQueryChange(it) },
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            label = { Text("Search city...") },
                             singleLine = true,
-                            enabled = !uiState.isLoading,
+                            leadingIcon = {
+                                Icon(Icons.Default.Search, contentDescription = null)
+                            },
+                            trailingIcon = {
+                                if (uiState.isSearching) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                }
+                            },
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                                 unfocusedBorderColor = MaterialTheme.colorScheme.outline
                             ),
                             shape = RoundedCornerShape(12.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        IconButton(
-                            onClick = { viewModel.loadWeather() },
-                            enabled = !uiState.isLoading && uiState.city.isNotBlank(),
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(
-                                    brush = Brush.horizontalGradient(
-                                        colors = listOf(
-                                            MaterialTheme.colorScheme.primary,
-                                            MaterialTheme.colorScheme.secondary
-                                        )
-                                    )
-                                )
+
+                        // Suggestions Dropdown
+                        AnimatedVisibility(
+                            visible = uiState.searchResults.isNotEmpty(),
+                            enter = fadeIn() + androidx.compose.animation.expandVertically(),
+                            exit = fadeOut() + androidx.compose.animation.shrinkVertically()
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search",
-                                tint = Color.White
-                            )
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    uiState.searchResults.forEach { geoItem ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable { viewModel.onCitySelected(geoItem) }
+                                                .padding(16.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = androidx.compose.material.icons.Icons.Default.LocationOn,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Column {
+                                                Text(
+                                                    text = geoItem.name ?: "",
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Text(
+                                                    text = listOfNotNull(geoItem.state, geoItem.country).joinToString(", "),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                        if (geoItem != uiState.searchResults.last()) {
+                                            androidx.compose.material3.Divider(
+                                                color = MaterialTheme.colorScheme.outlineVariant,
+                                                thickness = 0.5.dp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

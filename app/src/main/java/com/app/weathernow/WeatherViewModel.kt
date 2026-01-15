@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.app.weathernow.data.WeatherRepository
 import com.app.weathernow.data.WeatherResponse
 import com.app.weathernow.data.ForecastResponse
+import com.app.weathernow.data.GeoItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +18,10 @@ data class WeatherUiState(
     val isLoading: Boolean = false,
     val weather: WeatherResponse? = null,
     val forecast: ForecastResponse? = null,
-    val error: String? = null
+    val error: String? = null,
+    val searchQuery: String = "",
+    val searchResults: List<GeoItem> = emptyList(),
+    val isSearching: Boolean = false
 )
 
 @HiltViewModel
@@ -28,6 +32,48 @@ class WeatherViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(WeatherUiState())
     val uiState: StateFlow<WeatherUiState> = _uiState
 
+    // Debounce search
+    private var searchJob: kotlinx.coroutines.Job? = null
+
+    fun onSearchQueryChange(query: String) {
+        _uiState.value = _uiState.value.copy(searchQuery = query)
+        
+        searchJob?.cancel()
+        if (query.length > 2) {
+            searchJob = viewModelScope.launch {
+                kotlinx.coroutines.delay(500) // Debounce
+                _uiState.value = _uiState.value.copy(isSearching = true)
+                val result = repository.searchCity(query)
+                when (result) {
+                    is com.app.weathernow.data.WeatherResult.Success -> {
+                        _uiState.value = _uiState.value.copy(
+                            isSearching = false,
+                            searchResults = result.data
+                        )
+                    }
+                    else -> {
+                        _uiState.value = _uiState.value.copy(
+                            isSearching = false,
+                            searchResults = emptyList()
+                        )
+                    }
+                }
+            }
+        } else {
+             _uiState.value = _uiState.value.copy(searchResults = emptyList())
+        }
+    }
+
+    fun onCitySelected(city: GeoItem) {
+        val cityName = city.name ?: return
+        _uiState.value = _uiState.value.copy(
+            city = cityName,
+            searchQuery = "",
+            searchResults = emptyList()
+        )
+        loadWeather()
+    }
+
     fun onCityChange(city: String) {
         _uiState.value = _uiState.value.copy(city = city)
     }
@@ -36,7 +82,7 @@ class WeatherViewModel @Inject constructor(
         val city = _uiState.value.city.trim()
         if (city.isBlank()) return
 
-        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+        _uiState.value = _uiState.value.copy(isLoading = true, error = null, searchResults = emptyList())
 
         viewModelScope.launch {
             // Load current weather and forecast in parallel

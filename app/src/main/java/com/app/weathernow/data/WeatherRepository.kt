@@ -36,5 +36,17 @@ class WeatherRepository(
             WeatherResult.Error(e.message ?: "Unknown error")
         }
     }
+
+    suspend fun searchCity(query: String): WeatherResult<List<GeoItem>> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val response = api.searchCity(
+                query = query,
+                apiKey = BuildConfig.OPEN_WEATHER_API_KEY
+            )
+            WeatherResult.Success(response)
+        } catch (e: Exception) {
+            WeatherResult.Error(e.message ?: "Unknown error")
+        }
+    }
 }
 
