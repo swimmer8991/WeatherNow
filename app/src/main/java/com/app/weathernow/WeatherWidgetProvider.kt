@@ -58,10 +58,22 @@ class WeatherWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_temperature, "$temp°")
                 views.setTextViewText(R.id.widget_description, desc.replaceFirstChar { it.uppercase() })
                 
-                // Note: Setting dynamic icons from URL in RemoteViews usually requires 
-                // downloading the image and setting it as a bitmap. For simplicity,
-                // we'll use the app icon for now or we could add more logic later.
-                views.setImageViewResource(R.id.widget_icon, R.mipmap.ic_launcher)
+                // Set weather icon (emoji)
+                val iconCode = weather.weather?.firstOrNull()?.icon
+                val emoji = when {
+                    iconCode == null -> "🌤️"
+                    iconCode.startsWith("01") -> "☀️"
+                    iconCode.startsWith("02") -> "⛅"
+                    iconCode.startsWith("03") -> "☁️"
+                    iconCode.startsWith("04") -> "☁️"
+                    iconCode.startsWith("09") -> "🌧️"
+                    iconCode.startsWith("10") -> "🌦️"
+                    iconCode.startsWith("11") -> "⛈️"
+                    iconCode.startsWith("13") -> "❄️"
+                    iconCode.startsWith("50") -> "🌫️"
+                    else -> "🌤️"
+                }
+                views.setTextViewText(R.id.widget_icon, emoji)
             } else {
                 views.setTextViewText(R.id.widget_temperature, "--")
                 views.setTextViewText(R.id.widget_description, "Error loading")
