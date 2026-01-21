@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.app.weathernow.data.WeatherRepository
 import com.app.weathernow.data.WeatherResponse
 import com.app.weathernow.data.ForecastResponse
+import com.app.weathernow.data.CityPreferences
 import com.app.weathernow.data.GeoItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -26,7 +27,8 @@ data class WeatherUiState(
 
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
-    private val repository: WeatherRepository
+    private val repository: WeatherRepository,
+    private val cityPreferences: CityPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WeatherUiState())
@@ -81,6 +83,9 @@ class WeatherViewModel @Inject constructor(
     fun loadWeather() {
         val city = _uiState.value.city.trim()
         if (city.isBlank()) return
+
+        // Save city for widget
+        cityPreferences.saveCity(city)
 
         _uiState.value = _uiState.value.copy(isLoading = true, error = null, searchResults = emptyList())
 

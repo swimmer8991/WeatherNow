@@ -1,10 +1,13 @@
 package com.app.weathernow.di
 
+import com.app.weathernow.data.CityPreferences
 import com.app.weathernow.data.WeatherApi
 import com.app.weathernow.data.WeatherRepository
+import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -52,5 +55,10 @@ object NetworkModule {
     @Singleton
     fun provideWeatherRepository(api: WeatherApi): WeatherRepository =
         WeatherRepository(api)
+
+    @Provides
+    @Singleton
+    fun provideCityPreferences(@ApplicationContext context: Context): CityPreferences =
+        CityPreferences(context)
 }
 
